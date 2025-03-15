@@ -21,7 +21,7 @@ I've made all the improvements from [PiRobot V.0](https://github.com/ihandrian/P
 - Redesigned the interface with a fullscreen video feed
 - Added a semi-transparent control panel in the bottom left corner
 - Replaced text buttons with arrow icons for more intuitive control
-- The control panel has 80% opacity as requested
+- The control panel has 80% opacity
 - Added touch support for mobile devices
 
 
