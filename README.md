@@ -88,5 +88,5 @@ The system is optimized for Raspberry Pi 3B and uses lightweight detection model
 
 1. **Sensor Integration**: Add classes for different sensors (ultrasonic, IR, etc.)
 2. **Autonomous Navigation**: Implement path planning and obstacle avoidance
-~~3. **Computer Vision**: Add object detection using TensorFlow Lite or similar~~
+3. ~~**Computer Vision**: Add object detection using TensorFlow Lite or similar~~
 4. **Data Logging**: Implement data collection for training autonomous behaviors
