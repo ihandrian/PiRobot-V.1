@@ -43,24 +43,25 @@ I've made all the improvements from [PiRobot V.0](https://github.com/ihandrian/P
 
 
 ## How to Use
-1.
-2. Run virtual environment of your preference, in this case I´m using `venv` to create environment:
+1. Clone this repository. Save all the files to your project directory.
+2. Go to your dir "DocsChat" in your computer.
+3. Run virtual environment of your preference, in this case I´m using `venv` to create environment:
     ```plaintext
     python -m venv PiRobot
     ```
       Activate:
-      Windows:
-      ```plaintext
-      DocsChat\Scripts\activate
-      ```
-      Linux/macOS:
-      ```plaintext
-      source DocsChat/bin/activate
-      ```
+          Windows:
+          ```plaintext
+          DocsChat\Scripts\activate
+          ```
+          Linux/macOS:
+          ```plaintext
+          source DocsChat/bin/activate
+          ```
       Deactivate:
-      ```plaintext
-      deactivate
-      ```
+          ```plaintext
+          deactivate
+          ```
 3. Install the required dependencies:
 
 ```plaintext
