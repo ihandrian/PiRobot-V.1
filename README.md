@@ -44,7 +44,7 @@ I've made all the improvements from [PiRobot V.0](https://github.com/ihandrian/P
 
 ## How to Use
 1. Clone this repository. Save all the files to your project directory.
-2. Go to your dir "DocsChat" in your computer.
+2. Go to your dir "PiRobot-V.1" in your computer.
 3. Run virtual environment of your preference, in this case I´m using `venv` to create environment:
     ```plaintext
     python -m venv PiRobot
@@ -52,11 +52,11 @@ I've made all the improvements from [PiRobot V.0](https://github.com/ihandrian/P
      - Activate:
          - Windows:
           ```plaintext
-          DocsChat\Scripts\activate
+          PiRobot\Scripts\activate
           ```
          - Linux/macOS:
           ```plaintext
-          source DocsChat/bin/activate
+          source PiRobot/bin/activate
           ```
       - Deactivate:
           ```plaintext
