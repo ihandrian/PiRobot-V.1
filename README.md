@@ -1,32 +1,72 @@
-# PiRobot V.0 (basic)
+# PiRobot V.1
 
 ![image](https://github.com/user-attachments/assets/e8536b8b-3085-4539-90a0-e954b36e6790)
 
-### How to Use
 
-1. Save the files in the appropriate structure:
+## Key Improvements Implemented
 
-1. `robot_controller.py` in the main directory
-2. `control_panel.html` in a `templates` folder
+I've made all the improvements from PiRobot V.0 with addition:
+
+### 1. Person Detection and Following
+
+- Added a lightweight `PersonDetector` class using TensorFlow Lite for efficient person detection on Raspberry Pi 3B
+- Implemented a `PersonFollower` class that makes the robot follow the nearest detected person
+- The system automatically downloads the required model files if they're not present
+- Added controls to enable/disable detection and start/stop following
+- The robot will adjust its speed and direction based on the person's position and distance
 
 
+### 2. Fullscreen Video Feed with Overlay Controls
 
-2. Install required dependencies:
+- Redesigned the interface with a fullscreen video feed
+- Added a semi-transparent control panel in the bottom left corner
+- Replaced text buttons with arrow icons for more intuitive control
+- The control panel has 80% opacity as requested
+- Added touch support for mobile devices
+
+
+### 3. System Information Panel
+
+- Moved system information to the top of the screen
+- Made it semi-transparent with white text
+- Displays CPU usage, memory usage, temperature, and detection status
+- Updates in real-time
+
+
+### Additional Improvements
+
+- Added visual indicators for person detection (green bounding boxes)
+- Added visual indicator for the person being followed (red bounding box)
+- Improved error handling for when TensorFlow Lite is not available
+- Added controls to adjust the following speed
+- Made the interface fully responsive for different screen sizes
+
+
+## How to Use
+
+1. Install the required dependencies:
 
 ```plaintext
-pip install wiringpi flask opencv-python psutil
+pip install wiringpi flask opencv-python psutil tflite_runtime
 ```
 
 
-3. Run the robot controller:
+2. Run the robot controller:
 
 ```plaintext
-python robot_controller.py
+python main.py
+#previous filename `robot_controller.py`
 ```
 
 
-4. Access the control panel at `http://<your_pi_ip>:5002`
+3. Access the control panel at `http://<your_pi_ip>:5002`
+4. To use person following:
 
+1. Toggle "Detection" to enable person detection
+2. Click "Start Following" to make the robot follow the nearest person
+3. Adjust the follow speed as needed
+
+The system is optimized for Raspberry Pi 3B and uses lightweight detection models to ensure smooth performance.
 ### Future Development
 
 1. **Sensor Integration**: Add classes for different sensors (ultrasonic, IR, etc.)
