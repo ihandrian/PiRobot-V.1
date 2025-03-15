@@ -1,6 +1,6 @@
 # PiRobot V.1
 
-![image](https://github.com/user-attachments/assets/e8536b8b-3085-4539-90a0-e954b36e6790)
+![image](https://github.com/user-attachments/assets/dda5e5a5-4adf-41cf-b253-63e2e753e448)
 
 
 ## Key Improvements Implemented
