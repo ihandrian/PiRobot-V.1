@@ -69,12 +69,11 @@ pip install wiringpi flask opencv-python psutil tflite_runtime
 ```
 
 
-2. Run the `main.py`:
+2. Run the `main.py`, edited from `robot_controller.py`:
 
 ```plaintext
 python main.py
 ```
-#edited from previous filename `robot_controller.py`
 
 
 
