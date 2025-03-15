@@ -79,15 +79,14 @@ python main.py
 
 3. Access the control panel at `http://<your_pi_ip>:5002`
 4. To use person following:
-
-1. Toggle "Detection" to enable person detection
-2. Click "Start Following" to make the robot follow the nearest person
-3. Adjust the follow speed as needed
+    - Toggle "Detection" to enable person detection
+    - Click "Start Following" to make the robot follow the nearest person
+    - Adjust the follow speed as needed
 
 The system is optimized for Raspberry Pi 3B and uses lightweight detection models to ensure smooth performance.
 ### Future Development
 
 1. **Sensor Integration**: Add classes for different sensors (ultrasonic, IR, etc.)
 2. **Autonomous Navigation**: Implement path planning and obstacle avoidance
-3. **Computer Vision**: Add object detection using TensorFlow Lite or similar
+~~3. **Computer Vision**: Add object detection using TensorFlow Lite or similar~~
 4. **Data Logging**: Implement data collection for training autonomous behaviors
