@@ -73,8 +73,9 @@ pip install wiringpi flask opencv-python psutil tflite_runtime
 
 ```plaintext
 python main.py
-#previous filename `robot_controller.py`
 ```
+#edited from previous filename `robot_controller.py`
+
 
 
 3. Access the control panel at `http://<your_pi_ip>:5002`
