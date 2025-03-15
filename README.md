@@ -49,16 +49,16 @@ I've made all the improvements from [PiRobot V.0](https://github.com/ihandrian/P
     ```plaintext
     python -m venv PiRobot
     ```
-      Activate:
-          Windows:
+     - Activate:
+         - Windows:
           ```plaintext
           DocsChat\Scripts\activate
           ```
-          Linux/macOS:
+         - Linux/macOS:
           ```plaintext
           source DocsChat/bin/activate
           ```
-      Deactivate:
+      - Deactivate:
           ```plaintext
           deactivate
           ```
