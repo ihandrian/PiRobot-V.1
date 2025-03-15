@@ -5,7 +5,7 @@
 
 ## Key Improvements Implemented
 
-I've made all the improvements from [PiRobot V.0](https://github.com/ihandrian/PiRobot-V.0) with addition:
+I've made all the improvements from [PiRobot V.0](https://github.com/ihandrian/PiRobot-V.0) with an additions:
 
 ### 1. Person Detection and Following
 
@@ -43,15 +43,32 @@ I've made all the improvements from [PiRobot V.0](https://github.com/ihandrian/P
 
 
 ## How to Use
-
-1. Install the required dependencies:
+1.
+2. Run virtual environment of your preference, in this case I´m using `venv` to create environment:
+    ```plaintext
+    python -m venv PiRobot
+    ```
+      Activate:
+      Windows:
+      ```plaintext
+      DocsChat\Scripts\activate
+      ```
+      Linux/macOS:
+      ```plaintext
+      source DocsChat/bin/activate
+      ```
+      Deactivate:
+      ```plaintext
+      deactivate
+      ```
+3. Install the required dependencies:
 
 ```plaintext
 pip install wiringpi flask opencv-python psutil tflite_runtime
 ```
 
 
-2. Run the robot controller:
+2. Run the `main.py`:
 
 ```plaintext
 python main.py
