@@ -2,6 +2,10 @@
 
 ## Key Improvements Implemented
 
+
+https://github.com/user-attachments/assets/6f4e2e97-e6d2-4ab7-a625-ac442b331b42
+
+
 I've made all the improvements from [PiRobot V.0](https://github.com/ihandrian/PiRobot-V.0) with an additions:
 
 ### 1. Person Detection and Following
