@@ -658,30 +658,49 @@ class PersonFollower:
                 direction_info = self.person_detector.get_follow_direction(frame_width)
                 
                 if direction_info:
-                    position = direction_info['position']
-                    area_ratio = direction_info['area_ratio']
+                    position = direction_info['position']  # -1 (far left) to 1 (far right)
+                    area_ratio = direction_info['area_ratio']  # Approximation of distance
                     
-                    # Determine movement based on position and distance
-                    if area_ratio < 0.1:  # Person is far away, move forward
-                        if abs(position) > 0.3:  # Person is off-center
-                            if position < 0:
-                                self.motor_controller.move("left", self.follow_speed * 0.7)
-                            else:
-                                self.motor_controller.move("right", self.follow_speed * 0.7)
-                        else:
+                    # Log the values for debugging
+                    logger.debug(f"Follow target: position={position:.2f}, area_ratio={area_ratio:.2f}")
+                    
+                    # UPDATED FOLLOWING LOGIC:
+                    # If person is too far away, move toward them
+                    if area_ratio < 0.15:  # Person is far away
+                        # If person is significantly off-center, turn toward them first
+                        if abs(position) > 0.3:
+                            if position < 0:  # Person is to the left
+                                logger.debug("Person is far and to the left, turning left")
+                                self.motor_controller.move("left", self.follow_speed * 0.8)
+                            else:  # Person is to the right
+                                logger.debug("Person is far and to the right, turning right")
+                                self.motor_controller.move("right", self.follow_speed * 0.8)
+                        else:  # Person is mostly centered, move forward
+                            logger.debug("Person is far but centered, moving forward")
                             self.motor_controller.move("forward", self.follow_speed)
-                    elif area_ratio > 0.4:  # Person is too close, move backward
-                        self.motor_controller.move("backward", self.follow_speed * 0.5)
-                    else:  # Good distance, adjust position
+                    
+                    # If person is at a good distance but off-center, adjust position
+                    elif area_ratio < 0.4:  # Good distance
                         if abs(position) > 0.2:  # Person is off-center
-                            if position < 0:
+                            if position < 0:  # Person is to the left
+                                logger.debug("Person is at good distance but to the left, turning left")
                                 self.motor_controller.move("left", self.follow_speed * 0.6)
-                            else:
+                            else:  # Person is to the right
+                                logger.debug("Person is at good distance but to the right, turning right")
                                 self.motor_controller.move("right", self.follow_speed * 0.6)
-                        else:
-                            self.motor_controller.move("stop", 0)  # Stay in place
+                        else:  # Person is centered at good distance
+                            # Move forward slowly to maintain distance
+                            logger.debug("Person is at good distance and centered, moving forward slowly")
+                            self.motor_controller.move("forward", self.follow_speed * 0.3)
+                    
+                    # If person is too close, back up slightly
+                    else:  # Person is too close
+                        logger.debug("Person is too close, backing up")
+                        self.motor_controller.move("backward", self.follow_speed * 0.4)
+                
                 else:
                     # No person detected, stop
+                    logger.debug("No person detected, stopping")
                     self.motor_controller.move("stop", 0)
                 
                 time.sleep(0.1)  # Control loop rate
