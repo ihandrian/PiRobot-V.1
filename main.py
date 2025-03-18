@@ -112,7 +112,6 @@ class PersonDetector:
                     self.tflite_available = True
                     logger.info("Using TensorFlow's lite module instead of tflite_runtime")
                 except ImportError:
-                    logger.warning("Neither TensorFlow Lite nor TensorFlow is available. MobileNet detection 
                     logger.warning("Neither TensorFlow Lite nor TensorFlow is available. MobileNet detection disabled.")
                     self.tflite_available = False
             
