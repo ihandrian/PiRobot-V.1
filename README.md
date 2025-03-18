@@ -8,7 +8,7 @@ I've made all the improvements from [PiRobot V.0](https://github.com/ihandrian/P
 
 ### 1. Person Detection and Following
 
-- Added a lightweight `PersonDetector` class using TensorFlow Lite for efficient person detection on Raspberry Pi 3B
+- Added a lightweight `PersonDetector` class using TensorFlow Lite and YoloV3 for efficient person detection on Raspberry Pi 3B
 - Implemented a `PersonFollower` class that makes the robot follow the nearest detected person
 - The system automatically downloads the required model files if they're not present
 - Added controls to enable/disable detection and start/stop following
@@ -36,7 +36,7 @@ I've made all the improvements from [PiRobot V.0](https://github.com/ihandrian/P
 
 - Added visual indicators for person detection (green bounding boxes)
 - Added visual indicator for the person being followed (red bounding box)
-- Improved error handling for when TensorFlow Lite is not available
+- Improved error handling for when TensorFlow Lite or YoloV3 is not available
 - Added controls to adjust the following speed
 - Made the interface fully responsive for different screen sizes
 
