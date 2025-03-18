@@ -1,5 +1,5 @@
 import wiringpi as wp
-from flask import Flask, render_template, Response, request, jsonify
+from flask import Flask, render_template, Response, request, jsonify, url_for
 import threading
 import cv2
 import time
@@ -96,54 +96,108 @@ class PersonDetector:
         self.follow_mode = False
         self.detections = []
         self.detection_lock = threading.Lock()
+        self.model_type = "mobilenet"  # Default model: "mobilenet" or "yolov3"
         
-        # Initialize model
+        # Initialize models
         try:
             # Try to import TFLite
-            import tflite_runtime.interpreter as tflite
-            self.tflite_available = True
+            try:
+                import tflite_runtime.interpreter as tflite
+                self.tflite_available = True
+            except ImportError:
+                try:
+                    # Fall back to TensorFlow if tflite_runtime is not available
+                    import tensorflow as tf
+                    tflite = tf.lite
+                    self.tflite_available = True
+                    logger.info("Using TensorFlow's lite module instead of tflite_runtime")
+                except ImportError:
+                    logger.warning("Neither TensorFlow Lite nor TensorFlow is available. MobileNet detection 
+                    logger.warning("Neither TensorFlow Lite nor TensorFlow is available. MobileNet detection disabled.")
+                    self.tflite_available = False
             
-            # Path to model files - adjust these paths as needed
+            # Initialize YOLOv3 availability flag
+            self.yolov3_available = False
+            
+            # Path to model files
             model_dir = Path(__file__).parent / "models"
             model_dir.mkdir(exist_ok=True)
             
-            model_path = model_dir / "mobilenet_ssd_v2_coco_quant.tflite"
-            label_path = model_dir / "coco_labels.txt"
+            # MobileNet model paths
+            self.mobilenet_model_path = model_dir / "mobilenet_ssd_v2_coco_quant.tflite"
+            self.mobilenet_label_path = model_dir / "coco_labels.txt"
             
-            # Download model if not exists
-            if not model_path.exists():
-                logger.info("Downloading person detection model...")
-                self._download_model(
+            # YOLOv3 model paths
+            self.yolov3_model_path = model_dir / "yolov3-tiny.weights"
+            self.yolov3_config_path = model_dir / "yolov3-tiny.cfg"
+            self.yolov3_names_path = model_dir / "coco.names"
+            
+            # Download MobileNet model if not exists
+            if not self.mobilenet_model_path.exists():
+                logger.info("Downloading MobileNet SSD model...")
+                self._download_mobilenet_model(
                     "https://storage.googleapis.com/download.tensorflow.org/models/tflite/coco_ssd_mobilenet_v1_1.0_quant_2018_06_29.zip",
                     model_dir
                 )
             
-            # Load model
-            self.interpreter = tflite.Interpreter(model_path=str(model_path))
-            self.interpreter.allocate_tensors()
+            # Download YOLOv3 model if not exists
+            if not self.yolov3_model_path.exists():
+                logger.info("Downloading YOLOv3-tiny model...")
+                self._download_yolov3_model(model_dir)
             
-            # Get model details
-            self.input_details = self.interpreter.get_input_details()
-            self.output_details = self.interpreter.get_output_details()
-            self.input_shape = self.input_details[0]['shape']
-            self.height = self.input_shape[1]
-            self.width = self.input_shape[2]
-            
-            # Load labels
-            with open(label_path, 'r') as f:
-                self.labels = [line.strip() for line in f.readlines()]
+            # Initialize TFLite interpreter for MobileNet
+            if self.tflite_available:
+                self.interpreter = tflite.Interpreter(model_path=str(self.mobilenet_model_path))
+                self.interpreter.allocate_tensors()
                 
-            logger.info("Person detector initialized successfully")
+                # Get model details for MobileNet
+                self.input_details = self.interpreter.get_input_details()
+                self.output_details = self.interpreter.get_output_details()
+                self.input_shape = self.input_details[0]['shape']
+                self.height = self.input_shape[1]
+                self.width = self.input_shape[2]
+                
+                # Load MobileNet labels
+                with open(self.mobilenet_label_path, 'r') as f:
+                    self.mobilenet_labels = [line.strip() for line in f.readlines()]
             
+            # Initialize YOLOv3 model if OpenCV DNN module is available
+            try:
+                self.yolov3_net = cv2.dnn.readNetFromDarknet(
+                    str(self.yolov3_config_path), 
+                    str(self.yolov3_model_path)
+                )
+                # Check if GPU is available
+                try:
+                    self.yolov3_net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
+                    self.yolov3_net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
+                    logger.info("Using CUDA for YOLOv3 inference")
+                except:
+                    logger.info("CUDA not available, using CPU for YOLOv3 inference")
+              
+                # Load YOLOv3 class names
+                with open(self.yolov3_names_path, 'r') as f:
+                    self.yolov3_classes = [line.strip() for line in f.readlines()]
+              
+                self.yolov3_available = True
+                logger.info("YOLOv3 model initialized successfully")
+            except Exception as e:
+                logger.error(f"Error initializing YOLOv3 model: {e}")
+                self.yolov3_available = False
+              
+            logger.info("Person detector initialized successfully")
+          
         except ImportError:
             logger.warning("TensorFlow Lite not available. Person detection disabled.")
             self.tflite_available = False
+            self.yolov3_available = False
         except Exception as e:
             logger.error(f"Error initializing person detector: {e}")
             self.tflite_available = False
+            self.yolov3_available = False
     
-    def _download_model(self, url, model_dir):
-        """Download and extract model files"""
+    def _download_mobilenet_model(self, url, model_dir):
+        """Download and extract MobileNet SSD model files"""
         try:
             import requests
             import zipfile
@@ -157,7 +211,7 @@ class PersonDetector:
             # Rename files to expected names
             for file in model_dir.glob("*.tflite"):
                 file.rename(model_dir / "mobilenet_ssd_v2_coco_quant.tflite")
-                
+              
             # Create labels file if not exists
             label_path = model_dir / "coco_labels.txt"
             if not label_path.exists():
@@ -177,16 +231,64 @@ class PersonDetector:
                 with open(label_path, 'w') as f:
                     for label in coco_labels:
                         f.write(f"{label}\n")
-                        
-            logger.info("Model downloaded and extracted successfully")
-            
+                      
+            logger.info("MobileNet SSD model downloaded and extracted successfully")
+          
         except Exception as e:
-            logger.error(f"Error downloading model: {e}")
+            logger.error(f"Error downloading MobileNet model: {e}")
             raise
+
+    def _download_yolov3_model(self, model_dir):
+        """Download YOLOv3-tiny model files"""
+        try:
+            import requests
+          
+            # URLs for model files
+            weights_url = "https://pjreddie.com/media/files/yolov3-tiny.weights"
+            cfg_url = "https://raw.githubusercontent.com/pjreddie/darknet/master/cfg/yolov3-tiny.cfg"
+            names_url = "https://raw.githubusercontent.com/pjreddie/darknet/master/data/coco.names"
+          
+            # Download weights file
+            logger.info("Downloading YOLOv3-tiny weights...")
+            with open(self.yolov3_model_path, 'wb') as f:
+                response = requests.get(weights_url)
+                f.write(response.content)
+          
+            # Download config file
+            logger.info("Downloading YOLOv3-tiny config...")
+            with open(self.yolov3_config_path, 'wb') as f:
+                response = requests.get(cfg_url)
+                f.write(response.content)
+          
+            # Download class names file
+            logger.info("Downloading COCO class names...")
+            with open(self.yolov3_names_path, 'wb') as f:
+                response = requests.get(names_url)
+                f.write(response.content)
+              
+            logger.info("YOLOv3-tiny model files downloaded successfully")
+          
+        except Exception as e:
+            logger.error(f"Error downloading YOLOv3 model files: {e}")
+            raise
+
+    def set_model_type(self, model_type):
+        """Set detection model type: 'mobilenet' or 'yolov3'"""
+        if model_type == "yolov3" and not self.yolov3_available:
+            logger.warning("YOLOv3 model not available. Using MobileNet SSD instead.")
+            self.model_type = "mobilenet"
+        elif model_type == "mobilenet" and not self.tflite_available:
+            logger.warning("MobileNet SSD model not available. Person detection disabled.")
+            self.model_type = None
+        else:
+            self.model_type = model_type
+          
+        logger.info(f"Detection model set to: {self.model_type}")
+        return self.model_type
     
     def enable_detection(self, enabled=True):
         """Enable or disable person detection"""
-        self.detection_enabled = enabled and self.tflite_available
+        self.detection_enabled = enabled and (self.tflite_available or self.yolov3_available)
         logger.info(f"Person detection {'enabled' if self.detection_enabled else 'disabled'}")
         return self.detection_enabled
     
@@ -197,24 +299,33 @@ class PersonDetector:
         return self.follow_mode
     
     def detect_persons(self, frame):
-        """Detect persons in the given frame"""
-        if not self.detection_enabled or not self.tflite_available:
+        """Detect persons in the given frame using the selected model"""
+        if not self.detection_enabled:
             return []
-            
+          
+        if self.model_type == "mobilenet" and self.tflite_available:
+            return self._detect_with_mobilenet(frame)
+        elif self.model_type == "yolov3" and self.yolov3_available:
+            return self._detect_with_yolov3(frame)
+        else:
+            return []
+          
+    def _detect_with_mobilenet(self, frame):
+        """Detect persons using MobileNet SSD model"""
         try:
             # Resize and normalize image
             image = cv2.resize(frame, (self.width, self.height))
             image = np.expand_dims(image, axis=0)
-            
+          
             # Run inference
             self.interpreter.set_tensor(self.input_details[0]['index'], image)
             self.interpreter.invoke()
-            
+          
             # Get detection results
             boxes = self.interpreter.get_tensor(self.output_details[0]['index'])[0]
             classes = self.interpreter.get_tensor(self.output_details[1]['index'])[0]
             scores = self.interpreter.get_tensor(self.output_details[2]['index'])[0]
-            
+          
             # Filter for persons (class 0 in COCO dataset)
             persons = []
             for i in range(len(scores)):
@@ -229,15 +340,89 @@ class PersonDetector:
                         ],
                         'score': float(scores[i])
                     })
-            
+          
             # Update detections
             with self.detection_lock:
                 self.detections = persons
-                
+              
             return persons
-            
+          
         except Exception as e:
-            logger.error(f"Error in person detection: {e}")
+            logger.error(f"Error in MobileNet person detection: {e}")
+            return []
+          
+    def _detect_with_yolov3(self, frame):
+        """Detect persons using YOLOv3-tiny model"""
+        try:
+            # Prepare image for YOLOv3
+            height, width = frame.shape[:2]
+            blob = cv2.dnn.blobFromImage(frame, 1/255.0, (416, 416), swapRB=True, crop=False)
+          
+            # Set input and forward pass
+            self.yolov3_net.setInput(blob)
+            layer_names = self.yolov3_net.getLayerNames()
+            try:
+                # OpenCV 4.5.4+
+                output_layers = [layer_names[i-1] for i in self.yolov3_net.getUnconnectedOutLayers()]
+            except:
+                # Older OpenCV versions
+                output_layers = [layer_names[i[0]-1] for i in self.yolov3_net.getUnconnectedOutLayers()]
+              
+            outputs = self.yolov3_net.forward(output_layers)
+          
+            # Process detections
+            persons = []
+            conf_threshold = 0.5
+            nms_threshold = 0.4
+          
+            for output in outputs:
+                for detection in output:
+                    scores = detection[5:]
+                    class_id = np.argmax(scores)
+                    confidence = scores[class_id]
+                  
+                    # Filter for person class (class 0 in COCO dataset)
+                    if confidence > conf_threshold and class_id == 0:  # Person class
+                        # YOLO returns center, width, height
+                        center_x = int(detection[0] * width)
+                        center_y = int(detection[1] * height)
+                        w = int(detection[2] * width)
+                        h = int(detection[3] * height)
+                      
+                        # Rectangle coordinates
+                        x = max(0, int(center_x - w/2))
+                        y = max(0, int(center_y - h/2))
+                      
+                        persons.append({
+                            'box': [x, y, x+w, y+h],
+                            'score': float(confidence)
+                        })
+          
+            # Apply non-maximum suppression to remove overlapping boxes
+            if persons:
+                boxes = np.array([p['box'] for p in persons])
+                confidences = np.array([p['score'] for p in persons])
+              
+                # Convert boxes to the format expected by NMSBoxes
+                nms_boxes = [[b[0], b[1], b[2]-b[0], b[3]-b[1]] for b in boxes]  # [x, y, w, h]
+              
+                indices = cv2.dnn.NMSBoxes(nms_boxes, confidences, conf_threshold, nms_threshold)
+              
+                # Extract final detections
+                final_persons = []
+                for i in indices.flatten() if len(indices) > 0 else []:
+                    final_persons.append(persons[i])
+              
+                # Update detections
+                with self.detection_lock:
+                    self.detections = final_persons
+              
+                return final_persons
+          
+            return []
+          
+        except Exception as e:
+            logger.error(f"Error in YOLOv3 person detection: {e}")
             return []
     
     def get_follow_target(self):
@@ -537,7 +722,7 @@ class RobotWebServer:
         @self.app.route("/")
         def home():
             self.camera_controller.detect_cameras()  # Refresh camera list
-            return render_template("control_panel.html", 
+            return render_template("index.html", 
                                   cameras=self.camera_controller.cameras, 
                                   selected_camera=self.camera_controller.camera_index)
         
@@ -604,8 +789,8 @@ class RobotWebServer:
                 if self.camera_controller.latest_frame is None:
                     return jsonify({"info": "No camera feed available"})
                     
-            if not self.person_detector.tflite_available:
-                return jsonify({"info": "Person detection not available (TFLite missing)"})
+            if not self.person_detector.tflite_available and not self.person_detector.yolov3_available:
+                return jsonify({"info": "Person detection not available (TFLite and YOLOv3 missing)"})
                 
             if not self.person_detector.detection_enabled:
                 return jsonify({"info": "Person detection disabled"})
@@ -657,11 +842,29 @@ class RobotWebServer:
                     "cameras": self.camera_controller.cameras,
                     "active_camera": self.camera_controller.camera_index,
                     "detection_enabled": self.person_detector.detection_enabled,
+                    "detection_model": self.person_detector.model_type,
                     "follow_mode": self.person_detector.follow_mode
                 })
             except Exception as e:
                 logger.error(f"Error getting system info: {e}")
                 return jsonify({"error": "Failed to get system information"})
+        
+        @self.app.route("/detection_model", methods=["POST"])
+        def detection_model():
+            model_type = request.form.get("model_type")
+            
+            if model_type in ["mobilenet", "yolov3"]:
+                active_model = self.person_detector.set_model_type(model_type)
+                return jsonify({"status": "ok", "active_model": active_model})
+            else:
+                return jsonify({"status": "error", "message": "Invalid model type"})
+
+        @self.app.route("/css")
+        def css():
+            return Response(
+                open(os.path.join(os.path.dirname(__file__), 'templates', 'style.css'), 'r').read(),
+                mimetype='text/css'
+            )
         
     def start(self):
         """Start the web server in a separate thread"""
@@ -708,11 +911,13 @@ class Robot:
         signal.signal(signal.SIGTERM, self.signal_handler)
         
         logger.info("Robot initialized")
+        logger.info("Robot initialized. Use 'source PiRobot/bin/activate' to activate the virtual environment.")
         
     def start(self):
         """Start all robot components"""
         self.web_server.start()
         logger.info("Robot started")
+        logger.info(f"Access the web interface at http://<raspberry_pi_ip>:{self.web_server.port}")
         
         # Keep the main thread alive
         try:
@@ -738,6 +943,10 @@ class Robot:
 
 
 if __name__ == "__main__":
+    # Create templates directory if it doesn't exist
+    templates_dir = Path(__file__).parent / "templates"
+    templates_dir.mkdir(exist_ok=True)
+    
     robot = Robot()
     robot.start()
 
