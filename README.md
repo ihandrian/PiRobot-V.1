@@ -2,9 +2,7 @@
 
 ## Key Improvements Implemented
 
-
-https://github.com/user-attachments/assets/6f4e2e97-e6d2-4ab7-a625-ac442b331b42
-
+https://github.com/user-attachments/assets/c549cace-67d4-4eec-b868-973418a37e95
 
 I've made all the improvements from [PiRobot V.0](https://github.com/ihandrian/PiRobot-V.0) with an additions:
 
