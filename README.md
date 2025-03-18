@@ -89,3 +89,7 @@ The system is optimized for Raspberry Pi 3B and uses lightweight detection model
 2. **Autonomous Navigation**: Implement path planning and obstacle avoidance
 3. ~~**Computer Vision**: Add object detection using TensorFlow Lite or similar~~
 4. **Data Logging**: Implement data collection for training autonomous behaviors
+
+Support page:
+- Paypal https://paypal.me/IrfanHandrian
+- Buy me Coffee https://buymeacoffee.com/handrianirv
