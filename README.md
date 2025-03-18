@@ -62,7 +62,7 @@ I've made all the improvements from [PiRobot V.0](https://github.com/ihandrian/P
 3. Install the required dependencies:
 
 ```plaintext
-pip install wiringpi flask opencv-python psutil tflite_runtime
+pip3 install -r requirements.txt
 ```
 
 
