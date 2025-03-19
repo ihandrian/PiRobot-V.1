@@ -68,7 +68,7 @@ pip3 install -r requirements.txt
 ```
 
 
-2. Run the `main.py`, edited from `robot_controller.py`:
+2. Run the file `main.py`:
 
 ```plaintext
 python main.py
